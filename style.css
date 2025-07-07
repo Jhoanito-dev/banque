@@ -1,28 +1,64 @@
+/* À ajouter dans <head> de index.html :
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+*/
+
 body {
-  font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
-  background: #f8f9fa;
-  color: #333;
-  line-height: 1.6;
-  padding: 0;
+  font-family: 'Poppins', Arial, sans-serif;
+  background: linear-gradient(135deg, #23243a 0%, #3a3d5c 100%);
+  color: #23243a;
   margin: 0;
+  padding: 0;
+  min-height: 100vh;
 }
 
 h1, h2 {
-  color: #2c3e50;
-  margin-top: 32px;
+  font-family: 'Playfair Display', serif;
+  color: #d4af37;
+  margin-top: 40px;
   margin-bottom: 24px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  border-bottom: 2px solid #e9ecef;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-bottom: 2px solid #d4af37;
   padding-bottom: 10px;
+  background: linear-gradient(90deg, #23243a 60%, #d4af37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-#table-etudiants, #table-efs, #table-types-pret, #table-prets {
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 40px;
+header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 64px;
+  background: linear-gradient(90deg, #23243a 80%, #d4af37 100%);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  box-shadow: 0 2px 12px rgba(35,36,58,0.12);
+  z-index: 100;
+  padding: 0 40px;
+}
+header .logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 2em;
+  color: #d4af37;
+  letter-spacing: 2px;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(212,175,55,0.15);
+}
+
+.container {
+  max-width: 1100px;
+  margin: 100px auto 0 auto;
+  padding: 0 24px;
+}
+
+div {
+  margin-bottom: 28px;
+  background: rgba(255,255,255,0.7);
+  padding: 24px 24px 12px 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(35,36,58,0.08);
+  backdrop-filter: blur(4px);
 }
 
 table {
@@ -30,157 +66,160 @@ table {
   border-spacing: 0;
   width: 100%;
   margin-top: 20px;
+  background: rgba(255,255,255,0.6);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(35,36,58,0.10);
+  backdrop-filter: blur(4px);
 }
 
 th, td {
   border: none;
-  padding: 16px 20px;
+  padding: 18px 24px;
   text-align: left;
 }
 
 th {
-  background: #2c3e50;
-  color: #fff;
-  font-weight: 500;
-  font-size: 0.95em;
+  background: rgba(35,36,58,0.95);
+  color: #d4af37;
+  font-weight: 600;
+  font-size: 1em;
   letter-spacing: 0.5px;
+  border-bottom: 2px solid #d4af37;
 }
 
 tbody tr {
   border-bottom: 1px solid #e9ecef;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(.4,2,.6,1);
 }
-
 tbody tr:nth-child(even) {
-  background-color: #f8f9fa;
+  background-color: rgba(212,175,55,0.07);
 }
-
 tbody tr:hover {
-  background: #f1f5fd;
-  transform: translateX(2px);
+  background: rgba(212,175,55,0.13);
+  transform: scale(1.01);
+  box-shadow: 0 2px 12px rgba(212,175,55,0.10);
 }
 
 td button {
-  background: #3498db;
-  color: #fff;
+  background: linear-gradient(90deg, #d4af37 60%, #23243a 100%);
+  color: #23243a;
   border: none;
-  border-radius: 4px;
-  padding: 8px 14px;
-  margin-right: 6px;
+  border-radius: 6px;
+  padding: 10px 18px;
+  margin-right: 8px;
   cursor: pointer;
-  font-size: 0.9em;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-td button:first-child {
-  background: #2ecc71;
-}
-
-td button:last-child {
-  background: #e74c3c;
-}
-
-td button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-input[type="text"], 
-input[type="email"], 
-input[type="number"], 
-input[type="date"] {
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  padding: 10px 14px;
-  margin: 8px 6px 8px 0;
   font-size: 1em;
-  background: #fff;
-  transition: all 0.3s ease;
-  outline: none;
-  width: 200px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(212,175,55,0.10);
+  transition: all 0.2s cubic-bezier(.4,2,.6,1);
+  position: relative;
+  overflow: hidden;
+}
+td button:first-child {
+  background: linear-gradient(90deg, #d4af37 60%, #6dd5ed 100%);
+}
+td button:last-child {
+  background: linear-gradient(90deg, #23243a 60%, #d4af37 100%);
+  color: #fff;
+}
+td button:hover {
+  filter: brightness(1.08) drop-shadow(0 2px 8px #d4af37aa);
+  transform: translateY(-2px) scale(1.04);
 }
 
-input[type="text"]:focus, 
-input[type="email"]:focus, 
-input[type="number"]:focus, 
-input[type="date"]:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+input[type="text"], input[type="email"], input[type="number"], input[type="date"] {
+  border: 1.5px solid #d4af37;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 10px 8px 10px 0;
+  font-size: 1em;
+  background: rgba(255,255,255,0.85);
+  transition: all 0.3s cubic-bezier(.4,2,.6,1);
+  outline: none;
+  width: 220px;
+  color: #23243a;
+  box-shadow: 0 1px 4px rgba(212,175,55,0.07);
+}
+input[type="text"]:focus, input[type="email"]:focus, input[type="number"]:focus, input[type="date"]:focus {
+  border-color: #23243a;
+  box-shadow: 0 0 0 3px rgba(212,175,55,0.18);
+  background: #fff;
 }
 
 button {
-  background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
-  color: #fff;
+  background: linear-gradient(90deg, #d4af37 60%, #23243a 100%);
+  color: #23243a;
   border: none;
-  border-radius: 4px;
-  padding: 10px 20px;
+  border-radius: 8px;
+  padding: 12px 28px;
   font-size: 1em;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  margin: 8px 6px 8px 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  margin: 10px 8px 10px 0;
+  box-shadow: 0 2px 8px rgba(212,175,55,0.10);
+  transition: all 0.3s cubic-bezier(.4,2,.6,1);
   letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
 }
-
 button:hover {
-  background: linear-gradient(135deg, #2980b9 0%, #1a252f 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.08) drop-shadow(0 2px 8px #d4af37aa);
+  transform: translateY(-2px) scale(1.04);
 }
 
 input[type="hidden"] {
   display: none;
 }
 
-div {
-  margin-bottom: 24px;
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+@media (max-width: 900px) {
+  .container {
+    max-width: 98vw;
+    margin: 100px 0 0 0;
+    padding: 0 8px;
+  }
+  div {
+    padding: 16px 8px 8px 8px;
+  }
+  table, thead, tbody, th, td, tr {
+    font-size: 0.98em;
+  }
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-@media (max-width: 768px) {
+@media (max-width: 700px) {
+  header {
+    padding: 0 10px;
+    height: 54px;
+  }
+  .container {
+    margin-top: 70px;
+    padding: 0 2px;
+  }
   table, thead, tbody, th, td, tr {
     display: block;
   }
-  
   th, td {
-    padding: 12px 10px;
+    padding: 14px 10px;
     text-align: right;
     position: relative;
   }
-  
   th::before, td::before {
     content: attr(data-label);
     position: absolute;
     left: 10px;
     font-weight: bold;
     text-align: left;
+    color: #d4af37;
   }
-  
   tr {
-    margin-bottom: 16px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border-radius: 4px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 4px rgba(212,175,55,0.10);
+    border-radius: 8px;
   }
-  
-  input[type="text"], 
-  input[type="email"], 
-  input[type="number"], 
-  input[type="date"] {
+  input[type="text"], input[type="email"], input[type="number"], input[type="date"] {
     width: 100%;
     margin: 8px 0;
   }
-  
   button {
     width: 100%;
     margin: 8px 0;

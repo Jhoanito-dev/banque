@@ -19,12 +19,12 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'mikecao/flight' => array(
-            'pretty_version' => 'v1.3.9',
-            'version' => '1.3.9.0',
-            'reference' => 'bc5e03ca59accb3ef37e31b6d4a2a9c78c7bb7ce',
+        'setasign/fpdf' => array(
+            'pretty_version' => '1.8.2',
+            'version' => '1.8.2.0',
+            'reference' => 'd77904018090c17dc9f3ab6e944679a7a47e710a',
             'type' => 'library',
-            'install_path' => __DIR__ . '/../mikecao/flight',
+            'install_path' => __DIR__ . '/../setasign/fpdf',
             'aliases' => array(),
             'dev_requirement' => false,
         ),
