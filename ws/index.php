@@ -63,6 +63,13 @@ Flight::route('POST /efs', function() {
 // Ajouter des fonds à un EF
 Flight::route('PUT /efs/@id/fonds', function($id) {
     $data = Flight::request()->data;
+
+    // Correction : si le champ montant est vide, on parse le corps manuellement
+    if (empty($data->montant)) {
+        parse_str(file_get_contents('php://input'), $put_vars);
+        $data = (object)$put_vars;
+    }
+
     $db = getDB();
     $stmt = $db->prepare("UPDATE etablissement_financier SET fonds = fonds + ? WHERE id = ?");
     $stmt->execute([$data->montant, $id]);
