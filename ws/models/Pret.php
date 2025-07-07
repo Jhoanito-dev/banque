@@ -67,103 +67,153 @@ class Pret {
         }
     }
 
-    // Calcule les intérêts gagnés par mois pour un EF donné (seulement les prêts validés)
     public static function getInteretsParMois($id_ef, $date_debut, $date_fin) {
         try {
+            if (strtotime($date_debut) > strtotime($date_fin)) {
+                throw new Exception('La date de début doit être antérieure à la date de fin');
+            }
+
             $db = getDB();
             $sql = "
                 SELECT 
-                    DATE_FORMAT(p.date_pret, '%Y-%m') AS mois,
-                    SUM(p.montant * t.taux / 100) AS interets
+                    p.id,
+                    p.montant,
+                    p.date_pret,
+                    p.duree_mois,
+                    p.assurance,
+                    p.delai_premier_remboursement,
+                    t.taux
                 FROM pret p
                 JOIN type_pret t ON p.id_type_pret = t.id
                 WHERE p.id_ef = ?
-                  AND p.date_pret BETWEEN ? AND ?
                   AND p.valide = 1
-                GROUP BY mois
-                ORDER BY mois
+                  AND (
+                    (p.date_pret BETWEEN ? AND ?) OR
+                    (DATE_ADD(p.date_pret, INTERVAL p.delai_premier_remboursement MONTH) BETWEEN ? AND ?) OR
+                    (DATE_ADD(p.date_pret, INTERVAL p.delai_premier_remboursement + p.duree_mois - 1 MONTH) >= ?)
+                  )
+                ORDER BY p.date_pret
             ";
             $stmt = $db->prepare($sql);
-            $stmt->execute([$id_ef, $date_debut, $date_fin]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $stmt->execute([$id_ef, $date_debut, $date_fin, $date_debut, $date_fin, $date_debut]);
+            $prets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $interetsParMois = [];
+            
+            foreach ($prets as $pret) {
+                $tableauAmortissement = self::genererTableauAmortissement(
+                    $pret['montant'],
+                    $pret['taux'],
+                    $pret['duree_mois'],
+                    $pret['date_pret'],
+                    $pret['assurance'],
+                    $pret['delai_premier_remboursement']
+                );
+                
+                foreach ($tableauAmortissement as $echeance) {
+                    $mois = date('Y-m', strtotime($echeance['date']));
+                    
+                    if ($mois >= date('Y-m', strtotime($date_debut)) && 
+                        $mois <= date('Y-m', strtotime($date_fin))) {
+                        
+                        if (!isset($interetsParMois[$mois])) {
+                            $interetsParMois[$mois] = 0;
+                        }
+                        $interetsParMois[$mois] += $echeance['interets'];
+                    }
+                }
+            }
+            
+            $resultat = [];
+            foreach ($interetsParMois as $mois => $interets) {
+                $resultat[] = [
+                    'mois' => $mois,
+                    'interets' => round($interets, 2)
+                ];
+            }
+            
+            usort($resultat, function($a, $b) {
+                return strcmp($a['mois'], $b['mois']);
+            });
+            
+            return $resultat;
         } catch (Exception $e) {
             throw new Exception('Erreur lors du calcul des intérêts: ' . $e->getMessage());
         }
     }
 
-    // Calcule l'annuité constante selon la formule : A = C * (i * (1+i)^n) / ((1+i)^n - 1)
-    // où C = capital, i = taux mensuel, n = nombre d'échéances
     public static function calculerAnnuiteConstante($capital, $tauxAnnuel, $dureeMois, $assurance = 0) {
         try {
             if ($capital <= 0 || $dureeMois <= 0) {
                 throw new Exception('Capital et durée doivent être positifs');
+            }
+            if ($tauxAnnuel < 0 || $tauxAnnuel > 100) {
+                throw new Exception('Taux invalide (doit être entre 0 et 100%)');
+            }
+            if ($assurance < 0 || $assurance > 10) {
+                throw new Exception('Assurance invalide (doit être entre 0 et 10%)');
             }
             
             $tauxMensuel = $tauxAnnuel / 100 / 12;
             $assuranceMensuelle = ($capital * $assurance / 100) / $dureeMois;
             
             if ($tauxMensuel == 0) {
-                $annuite = $capital / $dureeMois;
-            } else {
-                // Protection contre les erreurs de calcul
-                $denominateur = pow(1 + $tauxMensuel, $dureeMois) - 1;
-                if ($denominateur == 0) {
-                    throw new Exception('Erreur de calcul: dénominateur nul');
-                }
-                $annuite = $capital * ($tauxMensuel * pow(1 + $tauxMensuel, $dureeMois)) / $denominateur;
+                return round(($capital / $dureeMois) + $assuranceMensuelle, 2);
             }
             
-            return $annuite + $assuranceMensuelle;
+            $denominateur = pow(1 + $tauxMensuel, $dureeMois) - 1;
+            if ($denominateur == 0) {
+                throw new Exception('Erreur de calcul: dénominateur nul');
+            }
+            
+            $annuite = $capital * ($tauxMensuel * pow(1 + $tauxMensuel, $dureeMois)) / $denominateur;
+            return round($annuite + $assuranceMensuelle, 2);
         } catch (Exception $e) {
             throw new Exception('Erreur lors du calcul de l\'annuité: ' . $e->getMessage());
         }
     }
 
-    // Génère le tableau d'amortissement complet
     public static function genererTableauAmortissement($capital, $tauxAnnuel, $dureeMois, $datePremierPret, $assurance = 0, $delaiPremierRemboursement = 0) {
         try {
             if ($capital <= 0 || $dureeMois <= 0) {
                 throw new Exception('Capital et durée doivent être positifs');
+            }
+            if ($tauxAnnuel < 0 || $tauxAnnuel > 100) {
+                throw new Exception('Taux invalide (doit être entre 0 et 100%)');
+            }
+            if ($assurance < 0 || $assurance > 10) {
+                throw new Exception('Assurance invalide (doit être entre 0 et 10%)');
+            }
+            if ($delaiPremierRemboursement < 0 || $delaiPremierRemboursement > 60) {
+                throw new Exception('Délai invalide (doit être entre 0 et 60 mois)');
             }
             
             $tableau = [];
             $capitalRestant = $capital;
             $tauxMensuel = $tauxAnnuel / 100 / 12;
             $assuranceMensuelle = ($capital * $assurance / 100) / $dureeMois;
+            $annuite = self::calculerAnnuiteConstante($capital, $tauxAnnuel, $dureeMois, 0); // Sans assurance
             
-            // Calcul de l'annuité constante
-            if ($tauxMensuel == 0) {
-                $annuite = $capital / $dureeMois;
-            } else {
-                $denominateur = pow(1 + $tauxMensuel, $dureeMois) - 1;
-                if ($denominateur == 0) {
-                    throw new Exception('Erreur de calcul: dénominateur nul');
-                }
-                $annuite = $capital * ($tauxMensuel * pow(1 + $tauxMensuel, $dureeMois)) / $denominateur;
-            }
-            
-            $annuiteTotale = $annuite + $assuranceMensuelle;
-            
-            // Date de la première échéance (après le délai)
             $datePremiereEcheance = date('Y-m-d', strtotime($datePremierPret . ' + ' . $delaiPremierRemboursement . ' months'));
             
             for ($mois = 1; $mois <= $dureeMois; $mois++) {
                 $dateEcheance = date('Y-m-d', strtotime($datePremiereEcheance . ' + ' . ($mois - 1) . ' months'));
                 
-                if ($tauxMensuel == 0) {
-                    $interets = 0;
-                    $amortissement = $annuite;
+                // Dernière échéance : ajustement pour éviter les reliquats
+                if ($mois == $dureeMois) {
+                    $amortissement = $capitalRestant;
+                    $interets = $annuite - $amortissement;
+                    $capitalRestant = 0;
                 } else {
                     $interets = $capitalRestant * $tauxMensuel;
                     $amortissement = $annuite - $interets;
+                    $capitalRestant -= $amortissement;
                 }
-                
-                $capitalRestant -= $amortissement;
                 
                 $tableau[] = [
                     'echeance' => $mois,
                     'date' => $dateEcheance,
-                    'annuite' => round($annuiteTotale, 2),
+                    'annuite' => round($annuite + $assuranceMensuelle, 2),
                     'amortissement' => round($amortissement, 2),
                     'interets' => round($interets, 2),
                     'assurance' => round($assuranceMensuelle, 2),
@@ -177,7 +227,6 @@ class Pret {
         }
     }
 
-    // Valide ou invalide un prêt
     public static function validerPret($id, $valide) {
         try {
             $db = getDB();
@@ -188,7 +237,6 @@ class Pret {
         }
     }
 
-    // Récupère les prêts par étudiant
     public static function getPretsParEtudiant($id_etudiant) {
         try {
             $db = getDB();
@@ -206,4 +254,4 @@ class Pret {
             throw new Exception('Erreur lors de la récupération des prêts: ' . $e->getMessage());
         }
     }
-} 
+}
