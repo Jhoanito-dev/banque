@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../models/Pret.php';
+require_once dirname(__DIR__, 2) . '/lib/fpdf.php';
 
 class PretController {
     public static function getAll() {
@@ -201,11 +202,17 @@ class PretController {
                 exit;
             }
             
-            require_once __DIR__ . '/../vendor/autoload.php';
             $pret = Pret::getById($id);
             if (!$pret) {
                 http_response_code(404);
                 echo json_encode(['error' => 'Prêt introuvable']);
+                exit;
+            }
+            // Ajout du contrôle de validation du prêt
+            if (!isset($pret['valide']) || $pret['valide'] != 1) {
+                http_response_code(403);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => "Vous devez d'abord accepter le pret avant de l'exporter"]);
                 exit;
             }
             
@@ -249,43 +256,53 @@ class PretController {
             );
             
             // Génération PDF
-            if (!class_exists('FPDF')) {
-                require_once __DIR__ . '/../vendor/setasign/fpdf/fpdf.php';
-            }
             $pdf = new \FPDF();
             $pdf->AddPage();
             $pdf->SetFont('Arial','B',16);
-            $pdf->Cell(0,10,'Contrat de prêt',0,1,'C');
+            // Titre souligné sans accent
+            $pdf->SetTextColor(0,0,128);
+            $pdf->Cell(0,10,'Contrat de pret',0,1,'C');
+            $pdf->SetDrawColor(0,0,128);
+            $pdf->SetLineWidth(0.7);
+            $pdf->Line(10, 20, 200, 20);
+            $pdf->SetTextColor(0,0,0);
             $pdf->SetFont('Arial','',12);
             $pdf->Cell(0,10,'Etablissement : '.$ef['nom'],0,1);
             $pdf->Cell(0,10,'Client : '.$etudiant['nom'].' '.$etudiant['prenom'],0,1);
-            $pdf->Cell(0,10,'Type de prêt : '.$typePret['nom'],0,1);
+            $pdf->Cell(0,10,'Type de pret : '.$typePret['nom'],0,1);
             $pdf->Cell(0,10,'Montant : '.number_format($pret['montant'],2).' EUR',0,1);
             $pdf->Cell(0,10,'Taux : '.$typePret['taux'].' %',0,1);
             $pdf->Cell(0,10,'Assurance : '.$pret['assurance'].' %',0,1);
-            $pdf->Cell(0,10,'Date de début : '.$pret['date_pret'],0,1);
-            $pdf->Cell(0,10,'Délai 1er remboursement : '.$pret['delai_premier_remboursement'].' mois',0,1);
+            $pdf->Cell(0,10,'Date de debut : '.$pret['date_pret'],0,1);
+            $pdf->Cell(0,10,'Delai 1er remboursement : '.$pret['delai_premier_remboursement'].' mois',0,1);
             $pdf->Cell(0,10,'',0,1);
             $pdf->SetFont('Arial','B',12);
-            $pdf->Cell(0,10,'Tableau d\'amortissement',0,1);
+            $pdf->SetTextColor(255,255,255);
+            $pdf->SetFillColor(0,0,128);
+            $pdf->Cell(0,10,'Tableau d\'amortissement',0,1,'L',true);
             $pdf->SetFont('Arial','',10);
-            $pdf->Cell(20,8,'#',1);
-            $pdf->Cell(30,8,'Date',1);
-            $pdf->Cell(30,8,'Annuité',1);
-            $pdf->Cell(30,8,'Amort.',1);
-            $pdf->Cell(30,8,'Intérêts',1);
-            $pdf->Cell(30,8,'Assurance',1);
-            $pdf->Cell(30,8,'Capital restant',1);
-            $pdf->Ln();
+            $pdf->SetTextColor(0,0,0);
+            // En-tête du tableau
+            $pdf->SetFillColor(200,200,255);
+            $pdf->Cell(20,8,'#',1,0,'C',true);
+            $pdf->Cell(30,8,'Date',1,0,'C',true);
+            $pdf->Cell(30,8,'Annuite',1,0,'C',true);
+            $pdf->Cell(30,8,'Amort.',1,0,'C',true);
+            $pdf->Cell(30,8,'Interets',1,0,'C',true);
+            $pdf->Cell(30,8,'Assurance',1,0,'C',true);
+            $pdf->Cell(30,8,'Capital restant',1,1,'C',true);
+            // Lignes du tableau avec alternance de couleur
+            $fill = false;
             foreach ($tableau as $row) {
-                $pdf->Cell(20,8,$row['echeance'],1);
-                $pdf->Cell(30,8,$row['date'],1);
-                $pdf->Cell(30,8,number_format($row['annuite'],2),1);
-                $pdf->Cell(30,8,number_format($row['amortissement'],2),1);
-                $pdf->Cell(30,8,number_format($row['interets'],2),1);
-                $pdf->Cell(30,8,number_format($row['assurance'],2),1);
-                $pdf->Cell(30,8,number_format($row['capital_restant'],2),1);
-                $pdf->Ln();
+                $pdf->SetFillColor($fill ? 240 : 255, $fill ? 240 : 255, 255);
+                $pdf->Cell(20,8,$row['echeance'],1,0,'C',true);
+                $pdf->Cell(30,8,$row['date'],1,0,'C',true);
+                $pdf->Cell(30,8,number_format($row['annuite'],2),1,0,'C',true);
+                $pdf->Cell(30,8,number_format($row['amortissement'],2),1,0,'C',true);
+                $pdf->Cell(30,8,number_format($row['interets'],2),1,0,'C',true);
+                $pdf->Cell(30,8,number_format($row['assurance'],2),1,0,'C',true);
+                $pdf->Cell(30,8,number_format($row['capital_restant'],2),1,1,'C',true);
+                $fill = !$fill;
             }
             header('Content-Type: application/pdf');
             header('Content-Disposition: attachment; filename="pret_'.$id.'.pdf"');
