@@ -2,179 +2,252 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Gestion Bancaire - Établissement Financier</title>
+  <title>Gestion des étudiants</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; }
-    input, button, select { margin: 5px; padding: 8px; width: 200px; }
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { margin: 5px; padding: 5px; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background-color: #f2f2f2; }
-    .section { margin-bottom: 30px; border: 1px solid #eee; padding: 15px; border-radius: 5px; }
-    h2 { color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
   </style>
 </head>
 <body>
 
-  <h1>Gestion de l'Établissement Financier</h1>
+  <h1>Gestion des étudiants</h1>
 
-  <!-- Section 1: Ajout de fonds -->
-  <div class="section">
-    <h2>Ajouter des fonds</h2>
-    <input type="number" id="montant" placeholder="Montant (€)" step="0.01">
-    <button onclick="ajouterFonds()">Ajouter</button>
+  <div>
+    <input type="hidden" id="id">
+    <input type="text" id="nom" placeholder="Nom">
+    <input type="text" id="prenom" placeholder="Prénom">
+    <input type="email" id="email" placeholder="Email">
+    <input type="number" id="age" placeholder="Âge">
+    <button id="btn-ajouter" onclick="ajouterEtudiant()">Ajouter</button>
+    <button id="btn-modifier" onclick="modifierEtudiant()" style="display:none;">Modifier</button>
   </div>
 
-  <!-- Section 2: Gestion des types de prêt -->
-  <div class="section">
-    <h2>Types de prêt</h2>
-    <input type="text" id="nom-pret" placeholder="Nom du prêt">
-    <input type="number" id="taux-pret" placeholder="Taux (%)" step="0.01">
-    <button onclick="ajouterTypePret()">Créer</button>
-    <table id="table-types-pret">
-      <thead>
-        <tr><th>ID</th><th>Nom</th><th>Taux</th><th>Actions</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <table id="table-etudiants">
+    <thead>
+      <tr>
+        <th>ID</th><th>Nom</th><th>Prénom</th><th>Email</th><th>Âge</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-  <!-- Section 3: Gestion des prêts clients -->
-  <div class="section">
-    <h2>Prêts clients</h2>
-    <select id="client-id">
-      <option value="">-- Choisir un client --</option>
-    </select>
-    <select id="type-pret-id">
-      <option value="">-- Type de prêt --</option>
-    </select>
-    <input type="number" id="montant-pret" placeholder="Montant (€)" step="0.01">
-    <button onclick="ajouterPret()">Accorder un prêt</button>
-    <table id="table-prets">
-      <thead>
-        <tr><th>ID</th><th>Client</th><th>Type</th><th>Montant</th><th>Taux</th><th>Actions</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <h2>Établissements Financiers</h2>
+  <div>
+    <input type="text" id="ef-nom" placeholder="Nom de l'EF">
+    <input type="number" id="ef-fonds" placeholder="Fonds initiaux">
+    <button onclick="ajouterEF()">Ajouter EF</button>
   </div>
+  <div>
+    <input type="number" id="ajout-fonds-id" placeholder="ID EF">
+    <input type="number" id="ajout-fonds-montant" placeholder="Montant à ajouter">
+    <button onclick="ajouterFondsEF()">Ajouter des fonds</button>
+  </div>
+  <table id="table-efs">
+    <thead>
+      <tr><th>ID</th><th>Nom</th><th>Fonds</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Types de prêts</h2>
+  <div>
+    <input type="text" id="type-nom" placeholder="Nom du type de prêt">
+    <input type="number" id="type-taux" placeholder="Taux (%)" step="0.01">
+    <button onclick="ajouterTypePret()">Ajouter type de prêt</button>
+  </div>
+  <table id="table-types-pret">
+    <thead>
+      <tr><th>ID</th><th>Nom</th><th>Taux (%)</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Prêts</h2>
+  <div>
+    <input type="number" id="pret-id-etudiant" placeholder="ID Étudiant">
+    <input type="number" id="pret-id-type" placeholder="ID Type de prêt">
+    <input type="number" id="pret-montant" placeholder="Montant">
+    <input type="date" id="pret-date">
+    <button onclick="ajouterPret()">Accorder prêt</button>
+  </div>
+  <table id="table-prets">
+    <thead>
+      <tr><th>ID</th><th>Étudiant</th><th>Type</th><th>Montant</th><th>Date</th><th>Taux (%)</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
   <script>
-    const apiBase = "http://localhost:8888/banque-api";
+    const apiBase = "http://localhost/banque/ws";
 
-    // Fonctions AJAX génériques (similaires à ton code existant)
     function ajax(method, url, data, callback) {
       const xhr = new XMLHttpRequest();
       xhr.open(method, apiBase + url, true);
-      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
       xhr.onreadystatechange = () => {
         if (xhr.readyState === 4 && xhr.status === 200) {
           callback(JSON.parse(xhr.responseText));
         }
       };
-      xhr.send(JSON.stringify(data));
+      xhr.send(data);
     }
 
-    // Charger les données au démarrage
-    function chargerDonnees() {
-      chargerTypesPret();
-      chargerClients();
-      chargerPrets();
-      chargerFonds();
-    }
-
-    // Section 1: Fonctions pour les fonds
-    function ajouterFonds() {
-      const montant = document.getElementById("montant").value;
-      ajax("POST", "/fonds", { montant }, () => {
-        alert("Fonds ajoutés !");
-        chargerFonds();
+    function chargerEtudiants() {
+      ajax("GET", "/etudiants", null, (data) => {
+        const tbody = document.querySelector("#table-etudiants tbody");
+        tbody.innerHTML = "";
+        data.forEach(e => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${e.id}</td>
+            <td>${e.nom}</td>
+            <td>${e.prenom}</td>
+            <td>${e.email}</td>
+            <td>${e.age}</td>
+            <td>
+              <button onclick='remplirFormulaire(${JSON.stringify(e)})'>✏️</button>
+              <button onclick='supprimerEtudiant(${e.id})'>🗑️</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
       });
     }
 
-    // Section 2: Fonctions pour les types de prêt
-    function ajouterTypePret() {
-      const nom = document.getElementById("nom-pret").value;
-      const taux = document.getElementById("taux-pret").value;
-      ajax("POST", "/types-pret", { nom, taux }, () => {
-        chargerTypesPret();
+    function ajouterEtudiant() {
+      const nom = document.getElementById("nom").value.trim();
+      const prenom = document.getElementById("prenom").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const age = document.getElementById("age").value.trim();
+      if (!nom || !prenom || !email || !age) {
+        alert("Veuillez remplir tous les champs pour ajouter un étudiant.");
+        return;
+      }
+      const data = `nom=${encodeURIComponent(nom)}&prenom=${encodeURIComponent(prenom)}&email=${encodeURIComponent(email)}&age=${age}`;
+      ajax("POST", "/etudiants", data, () => {
+        resetForm();
+        chargerEtudiants();
       });
     }
 
+    function modifierEtudiant() {
+      const id = document.getElementById("id").value;
+      const nom = document.getElementById("nom").value.trim();
+      const prenom = document.getElementById("prenom").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const age = document.getElementById("age").value.trim();
+      if (!nom || !prenom || !email || !age) {
+        alert("Veuillez remplir tous les champs pour modifier l'étudiant.");
+        return;
+      }
+      const data = `nom=${encodeURIComponent(nom)}&prenom=${encodeURIComponent(prenom)}&email=${encodeURIComponent(email)}&age=${age}`;
+      ajax("PUT", `/etudiants/${id}`, data, () => {
+        resetForm();
+        chargerEtudiants();
+      });
+    }
+
+    function remplirFormulaire(e) {
+      document.getElementById("id").value = e.id;
+      document.getElementById("nom").value = e.nom;
+      document.getElementById("prenom").value = e.prenom;
+      document.getElementById("email").value = e.email;
+      document.getElementById("age").value = e.age;
+      document.getElementById("btn-ajouter").style.display = "none";
+      document.getElementById("btn-modifier").style.display = "inline-block";
+    }
+
+    function supprimerEtudiant(id) {
+      if (confirm("Supprimer cet étudiant ?")) {
+        ajax("DELETE", `/etudiants/${id}`, null, () => {
+          chargerEtudiants();
+        });
+      }
+    }
+
+    function resetForm() {
+      document.getElementById("id").value = "";
+      document.getElementById("nom").value = "";
+      document.getElementById("prenom").value = "";
+      document.getElementById("email").value = "";
+      document.getElementById("age").value = "";
+      document.getElementById("btn-ajouter").style.display = "inline-block";
+      document.getElementById("btn-modifier").style.display = "none";
+    }
+
+    // --- EF ---
+    function chargerEFs() {
+      ajax("GET", "/efs", null, (data) => {
+        const tbody = document.querySelector("#table-efs tbody");
+        tbody.innerHTML = "";
+        data.forEach(e => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${e.id}</td><td>${e.nom}</td><td>${e.fonds}</td>`;
+          tbody.appendChild(tr);
+        });
+      });
+    }
+    function ajouterEF() {
+      const nom = document.getElementById("ef-nom").value;
+      const fonds = document.getElementById("ef-fonds").value;
+      const data = `nom=${encodeURIComponent(nom)}&fonds=${fonds}`;
+      ajax("POST", "/efs", data, chargerEFs);
+    }
+    function ajouterFondsEF() {
+      const id = document.getElementById("ajout-fonds-id").value;
+      const montant = document.getElementById("ajout-fonds-montant").value;
+      const data = `montant=${montant}`;
+      ajax("PUT", `/efs/${id}/fonds`, data, chargerEFs);
+    }
+
+    // --- Types de prêts ---
     function chargerTypesPret() {
       ajax("GET", "/types-pret", null, (data) => {
         const tbody = document.querySelector("#table-types-pret tbody");
         tbody.innerHTML = "";
-        data.forEach(t => {
+        data.forEach(e => {
           const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${t.id}</td>
-            <td>${t.nom}</td>
-            <td>${t.taux}%</td>
-            <td><button onclick='supprimerTypePret(${t.id})'>🗑️</button></td>
-          `;
+          tr.innerHTML = `<td>${e.id}</td><td>${e.nom}</td><td>${e.taux}</td>`;
           tbody.appendChild(tr);
         });
       });
     }
-
-    // Section 3: Fonctions pour les prêts clients
-    function ajouterPret() {
-      const clientId = document.getElementById("client-id").value;
-      const typePretId = document.getElementById("type-pret-id").value;
-      const montant = document.getElementById("montant-pret").value;
-      ajax("POST", "/prets", { clientId, typePretId, montant }, () => {
-        chargerPrets();
-      });
+    function ajouterTypePret() {
+      const nom = document.getElementById("type-nom").value;
+      const taux = document.getElementById("type-taux").value;
+      const data = `nom=${encodeURIComponent(nom)}&taux=${taux}`;
+      ajax("POST", "/types-pret", data, chargerTypesPret);
     }
 
+    // --- Prêts ---
     function chargerPrets() {
       ajax("GET", "/prets", null, (data) => {
         const tbody = document.querySelector("#table-prets tbody");
         tbody.innerHTML = "";
-        data.forEach(p => {
+        data.forEach(e => {
           const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${p.id}</td>
-            <td>${p.client_nom}</td>
-            <td>${p.type_pret_nom}</td>
-            <td>${p.montant}€</td>
-            <td>${p.taux}%</td>
-            <td><button onclick='supprimerPret(${p.id})'>🗑️</button></td>
-          `;
+          tr.innerHTML = `<td>${e.id}</td><td>${e.nom_etudiant} ${e.prenom}</td><td>${e.nom_type}</td><td>${e.montant}</td><td>${e.date_pret}</td><td>${e.taux}</td>`;
           tbody.appendChild(tr);
         });
       });
     }
-
-    // Suite
-    function chargerClients() {
-        ajax("GET", "/clients", null, (data) => {
-            const select = document.getElementById("client-id");
-            select.innerHTML = '<option value="">-- Choisir un client --</option>';
-            data.forEach(c => {
-                const option = document.createElement("option");
-                option.value = c.id;
-                option.textContent = c.nom;
-                select.appendChild(option);
-            });
-        });
+    function ajouterPret() {
+      const id_etudiant = document.getElementById("pret-id-etudiant").value;
+      const id_type_pret = document.getElementById("pret-id-type").value;
+      const montant = document.getElementById("pret-montant").value;
+      const date_pret = document.getElementById("pret-date").value;
+      const data = `id_etudiant=${id_etudiant}&id_type_pret=${id_type_pret}&montant=${montant}&date_pret=${date_pret}`;
+      ajax("POST", "/prets", data, chargerPrets);
     }
 
-    function chargerFonds() {
-        ajax("GET", "/fonds", null, (data) => {
-            console.log("Fonds disponibles:", data);
-        });
-    }
-
-    function supprimerPret(id) {
-        if (confirm("Supprimer ce prêt ?")) {
-            ajax("DELETE", `/prets/${id}`, null, () => {
-                chargerPrets();
-            });
-        }
-    }
-
-    // Au chargement de la page
-    window.onload = chargerDonnees;
+    chargerEtudiants();
+    chargerEFs();
+    chargerTypesPret();
+    chargerPrets();
   </script>
+
 </body>
 </html>
